@@ -1,0 +1,53 @@
+# Scraping
+requests==2.31.0
+beautifulsoup4==4.12.3
+lxml==5.2.1
+
+# PDF parsing
+pymupdf==1.24.3
+camelot-py==0.11.0
+
+# Chunking + RAG
+langchain==0.2.6
+langchain-community==0.2.6
+langchain-google-genai==1.0.7
+langchain-chroma==0.1.2
+langchain-groq==0.1.6
+
+# Vector store
+chromadb==0.5.3
+pinecone-client==3.2.2
+
+# LLM (free tier)
+groq==0.9.0
+google-generativeai==0.7.2
+
+# API
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+python-multipart==0.0.9
+
+# Database
+psycopg2-binary==2.9.9
+sqlalchemy==2.0.31
+alembic==1.13.2
+
+# Scheduling
+apscheduler==3.10.4
+
+# UI
+streamlit==1.36.0
+
+# Observability
+prometheus-client==0.20.0
+
+# Utilities
+python-dotenv==1.0.1
+structlog==24.2.0
+pydantic==2.8.2
+pydantic-settings==2.3.4
+
+# Testing
+pytest==8.2.2
+pytest-asyncio==0.23.7
+httpx==0.27.0
