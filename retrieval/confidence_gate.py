@@ -1,7 +1,10 @@
 """
 Confidence gate — fires BEFORE the LLM is called.
 
-Threshold: 0.72 (set in CONFIDENCE_THRESHOLD env var, default matches locked contract).
+Threshold: 0.65 (set in CONFIDENCE_THRESHOLD env var).
+Recalibrated from 0.72 to 0.65 for OpenAI text-embedding-3-small cosine scoring:
+  - Relevant RBI queries score 0.65–0.73
+  - Out-of-scope queries score 0.45–0.52
 If the top retrieved chunk similarity score is below threshold, the gate fires and
 the LLM is never called.
 """
@@ -16,7 +19,7 @@ from models.response import GateFiredResponse, QueryResponse
 
 logger = structlog.get_logger(__name__)
 
-_DEFAULT_THRESHOLD = 0.72
+_DEFAULT_THRESHOLD = 0.65
 
 
 def get_threshold() -> float:

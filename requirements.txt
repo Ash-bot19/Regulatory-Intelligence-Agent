@@ -10,17 +10,15 @@ camelot-py==0.11.0
 # Chunking + RAG
 langchain==0.2.6
 langchain-community==0.2.6
-langchain-google-genai==1.0.7
+langchain-openai==0.1.17
 langchain-chroma==0.1.2
-langchain-groq==0.1.6
 
 # Vector store
 chromadb==0.5.3
 pinecone-client==3.2.2
 
-# LLM (free tier)
-groq==0.9.0
-google-generativeai==0.7.2
+# LLM
+openai==1.35.7
 
 # API
 fastapi==0.111.0

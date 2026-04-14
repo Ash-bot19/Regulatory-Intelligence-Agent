@@ -17,6 +17,7 @@ from fastapi import APIRouter, HTTPException
 
 from api.schemas import QueryRequest
 from audit.writer import write_audit_record
+from chain.query_suggester import get_suggestions
 from chain.rag_chain import run_chain
 from models.response import GateFiredResponse, QueryResponse
 from monitoring.metrics import confidence_histogram, llm_latency_histogram, query_counter
@@ -78,7 +79,9 @@ async def query(request: QueryRequest) -> QueryResponse | GateFiredResponse:
             citations=None,
             gate_fired=True,
         )
-        logger.info("response_gate_fired", query_id=str(query_id))
+        suggestions = get_suggestions(query_text)
+        gf.response.suggestions = suggestions
+        logger.info("response_gate_fired", query_id=str(query_id), num_suggestions=len(suggestions))
         return gf.response
 
     confidence_histogram.observe(top_score)

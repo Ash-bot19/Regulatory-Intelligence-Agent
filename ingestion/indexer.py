@@ -2,7 +2,7 @@
 Chroma indexer (local dev) and Pinecone indexer (demo/prod).
 
 Indexed collection name: rbi_circulars
-Embedding model: Google text-embedding-004 (Gemini free tier, 768 dims)
+Embedding model: text-embedding-3-small (OpenAI, 1536 dims)
 """
 
 import os
@@ -10,18 +10,18 @@ from pathlib import Path
 
 import structlog
 from langchain.schema import Document
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_openai import OpenAIEmbeddings
 
 logger = structlog.get_logger(__name__)
 
 COLLECTION_NAME = "rbi_circulars"
-EMBEDDING_MODEL = "models/gemini-embedding-001"
+EMBEDDING_MODEL = "text-embedding-3-small"
 
 
-def _embeddings() -> GoogleGenerativeAIEmbeddings:
-    return GoogleGenerativeAIEmbeddings(
+def _embeddings() -> OpenAIEmbeddings:
+    return OpenAIEmbeddings(
         model=EMBEDDING_MODEL,
-        google_api_key=os.environ["GOOGLE_API_KEY"],
+        openai_api_key=os.environ["OPENAI_API_KEY"],
     )
 
 
@@ -36,6 +36,7 @@ def get_chroma_store(persist_dir: str | None = None):
         collection_name=COLLECTION_NAME,
         embedding_function=_embeddings(),
         persist_directory=directory,
+        collection_metadata={"hnsw:space": "cosine"},
     )
 
 
@@ -53,6 +54,28 @@ def get_pinecone_store():
         embedding=_embeddings(),
         text_key="page_content",
     )
+
+
+def get_indexed_circular_ids(store=None) -> set[str]:
+    """
+    Return the set of circular_ids already present in the collection.
+
+    Used by the pipeline to skip re-indexing circulars that were already
+    processed in a previous run (prevents duplicate chunks on reruns).
+    """
+    target_store = store or get_chroma_store()
+    try:
+        result = target_store._collection.get(include=["metadatas"])
+        ids: set[str] = set()
+        for meta in result.get("metadatas", []):
+            cid = meta.get("circular_id")
+            if cid:
+                ids.add(cid)
+        logger.info("existing_circular_ids_fetched", count=len(ids))
+        return ids
+    except Exception as exc:
+        logger.warning("get_indexed_ids_failed", error=str(exc))
+        return set()
 
 
 _RETRY_ATTEMPTS = 4

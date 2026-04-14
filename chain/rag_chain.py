@@ -1,5 +1,5 @@
 """
-LCEL RAG chain — retrieved chunks → Groq LLM → structured response.
+LCEL RAG chain — retrieved chunks → GPT-4o-mini → structured response.
 
 The LLM is only called after the confidence gate passes (handled in the API layer).
 The chain itself is stateless: caller passes in pre-retrieved docs and query.
@@ -12,7 +12,7 @@ import structlog
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
 
 from chain.citation_mapper import extract_citations
 from models.response import QueryResponse
@@ -22,14 +22,20 @@ logger = structlog.get_logger(__name__)
 _SYSTEM_PROMPT = """\
 You are a regulatory compliance assistant specialising in Reserve Bank of India (RBI) regulations.
 
-You will be given excerpts from official RBI circulars. Using ONLY the provided context, answer the user's question clearly and accurately.
+You will be given excerpts from official RBI circulars. Your job is to extract and present every piece of relevant regulatory information from the context — even if coverage is partial.
 
-Rules:
-- Base your answer ONLY on the provided context. Do not draw on outside knowledge.
-- If the context does not contain enough information to answer, say so explicitly.
-- Do not fabricate circular references, dates, or regulatory requirements.
+Step 1: Read all provided excerpts carefully.
+Step 2: Identify every excerpt that relates — directly or indirectly — to the user's question.
+Step 3: Synthesise those excerpts into a structured answer.
+Step 4: If coverage is partial, answer with what is available and note the gap at the end (one sentence).
+
+Hard rules:
+- Use ONLY information present in the provided context. Do not draw on outside knowledge.
+- Never refuse to answer solely because the context lacks a specific detail. Extract what is there.
+- If the context contains KYC, compliance, or related prudential requirements, include them even if they do not mention the exact product or entity in the query.
+- Do not fabricate circular references, dates, or regulatory requirements not present in the context.
 - Write in plain English. Use numbered lists for multi-part requirements.
-- Do not include legal disclaimers or recommend consulting a lawyer.
+- Do not add legal disclaimers or recommend consulting a lawyer.
 
 Context from RBI circulars:
 {context}
@@ -38,10 +44,10 @@ Context from RBI circulars:
 _HUMAN_PROMPT = "{question}"
 
 
-def _build_llm() -> ChatGroq:
-    return ChatGroq(
-        model="llama-3.3-70b-versatile",
-        api_key=os.environ["GROQ_API_KEY"],
+def _build_llm() -> ChatOpenAI:
+    return ChatOpenAI(
+        model="gpt-4o-mini",
+        api_key=os.environ["OPENAI_API_KEY"],
         temperature=0,
         max_tokens=1024,
     )

@@ -27,3 +27,4 @@ class GateFiredResponse(BaseModel):
     confidence_score: float
     query_id: UUID
     gate_fired: bool = True
+    suggestions: list[str] = []

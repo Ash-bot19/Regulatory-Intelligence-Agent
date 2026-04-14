@@ -17,7 +17,7 @@ import structlog
 from scraper.rbi_scraper import scrape_index, download_all
 from scraper.pdf_extractor import extract_text
 from ingestion.chunker import chunk_document
-from ingestion.indexer import index_documents, get_chroma_store
+from ingestion.indexer import index_documents, get_chroma_store, get_indexed_circular_ids
 from ingestion.quarantine import quarantine
 
 logger = structlog.get_logger(__name__)
@@ -77,9 +77,21 @@ def run_pipeline(
 
     # Stage 3–5: Extract → chunk → index
     store = get_chroma_store()
+    already_indexed = get_indexed_circular_ids(store)
+    if already_indexed:
+        logger.warning(
+            "duplicate_check",
+            already_indexed_count=len(already_indexed),
+            message="Circulars already in collection will be skipped. Wipe data/chroma to force re-index.",
+        )
+
     all_chunks = []
 
     for circular_id, pdf_path in pdf_map.items():
+        if circular_id in already_indexed:
+            logger.warning("circular_already_indexed_skipped", circular_id=circular_id)
+            continue
+
         raw_meta = meta_by_id[circular_id]
 
         # Extract

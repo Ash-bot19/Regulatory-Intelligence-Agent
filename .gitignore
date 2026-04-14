@@ -1,5 +1,6 @@
 .env
 .planning/
+CLAUDE.md
 data/
 __pycache__/
 *.pyc
